@@ -33,11 +33,30 @@ def f_five(x, y, Q):
 	return 0
 
 # Função que aplica uma função em todos os elementos da matriz.
-def apply(m, f, Q):
+def gen_scene(m, f, Q):
 	for (x,y), value in np.ndenumerate(m):
 		m[x,y] = f(x, y, Q)
-	
+
 	return m
+
+# Função que calcula o máximo local dos d pontos a partir
+# 	de (i,j) horizontal e verticalmente
+def local_max(scene, i, j, d):
+	return scene[i*d:(i+1)*d:1, j*d:(j+1)*d:1].max()
+
+# Função que calcula os valores da imagem digital
+#  a partir da cena utilizando o máximo local.
+def gen_image(image, scene, B, f_max=local_max):
+	d = scene.shape[0]/image.shape[0]
+
+	for (i,j), value in np.ndenumerate(image):
+		image[i,j] = np.uint8(f_max(scene, i, j, d)) 
+						& (255 >> 8-B) # Mudar esse 8 hardcoded ?
+
+	return image
+
+def RMSE(g, R):
+	return math.sqrt(sum(sum( (g-R)**2 )))
 
 def main():
 	# Recebendo parametros.
@@ -62,7 +81,8 @@ def main():
 	# Gerando a imagem da cena.
 	# Numpy array preenchidas com zeros de tamanho C x C.
 	scene = np.zeros((C,C))
-	# Gerando a cena de acordo com a função escolhida.
+
+	# Definindo a possibilidade das funções para gerar a cena.
 	functions = {
 		1: f_one,
         2: f_two,
@@ -70,14 +90,14 @@ def main():
         4: f_four,
         5: f_five,
 	}
-	scene = apply(scene, functions.get(f), Q)
+	# Gerando a cena de acordo com a função escolhida.
+	scene = gen_scene(scene, functions.get(f), Q)
 
-	print(scene[0,10])
+	# Gerando imagem digital a partir da cena.
+	image = np.zeros((N, N), dtype=np.uint8)
+	image = gen_image(image, scene, B)
 
-
-
-
-
+	# Comparação
 
 if __name__ == "__main__":
     main()
