@@ -68,23 +68,18 @@ def local_max(scene, i, j, d):
 def gen_image(image, scene, B, f_max=local_max):
 	d = scene.shape[0]/image.shape[0]
 
-	# Normalizando valores entre 0 e 255
-	# scene = (scene* ((np.iinfo(np.int8).max-np.iinfo(np.int8).min)/(scene.max() - scene.min())) )
-	scene = 255*((scene)/(scene.max()))
-
-	# Convertendo para int32
-	scene = scene.astype('int')
-
 	# Quantização
-	print("gerando img")
-	print(scene.min())
-	print(scene.max())
-	print(scene)
-	scene = scene >> (8-B)
+
+	# Normalizando valores entre 0 e 65535 (uint16 max)
+	scene = np.iinfo(np.uint16).max*((scene-scene.min())/(scene.max()-scene.min()))
+
+	# Convertendo para int16
+	# scene = scene.astype('uint16')
+	# scene = scene >> (16-B)
 
 	# Máximo local
 	for (i,j), value in np.ndenumerate(image):
-		image[i,j] = (f_max(scene, i, j, d))
+		image[i,j] = np.uint16(f_max(scene, i, j, d)) >> (16-B)
 
 	return image
 
@@ -126,24 +121,14 @@ def main():
 	}
 	# Gerando a cena de acordo com a função escolhida.
 	scene =  functions.get(f)(scene, Q)
-	imageio.imwrite("scene.png", scene)
-	print("cena:")
-	print(scene)
-	print(scene.max())
-	print(scene.min())
 	# Gerando imagem digital a partir da cena.
 	image = np.zeros((N, N))
 	image = gen_image(image, scene, B)
-	imageio.imwrite("image.png", image)
 
 	# Comparação
 	R = np.load(fname) # Carregando arquivo para comparação.
 
 	error = RMSE(image, R)
-	print("RESPOSTA")
-	print(image)
-	print("R-TRUE")
-	print(R)
 	print(error)
 
 if __name__ == "__main__":
