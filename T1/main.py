@@ -9,7 +9,6 @@
 import numpy as np
 import random
 import math
-import imageio
 
 # Funções para geração da imagem da cena.
 
@@ -28,7 +27,7 @@ def f_two(m, Q):
 # Função 3 - (x/Q) - sqrt(y/Q).
 def f_three(m, Q):
 	for (x, y), value in np.ndenumerate(m):
-		m[x, y] = ((x/Q) - math.sqrt(y/Q))
+		m[x, y] = abs((x/Q) - math.sqrt(y/Q))
 	return m
 
 # Função 4 - valor aleatório continuo entre 0 e 1.
@@ -41,17 +40,18 @@ def f_four(m, Q):
 # Função 5 - caminho aleatório.
 def f_five(m, Q):
 	C = m.shape[0]
-	moves = int(C*C/4)
+	moves = int(C*C/2)
 	# Passo 1
 	x = 0
 	y = 0
 	m[x, y] = 1.0
 
 	for i in range(moves):
+		# Passo em x
 		dx  = random.randint(-1, 1)
 		x = ((x + dx) % C)
 		m[x, y] = 1.0
-
+		# Passo em y
 		dy = random.randint(-1, 1)
 		y = ((y + dy) % C)
 		m[x, y] = 1.0
@@ -66,20 +66,21 @@ def local_max(scene, i, j, d):
 # Função que calcula os valores da imagem digital
 #  a partir da cena utilizando o máximo local.
 def gen_image(image, scene, B, f_max=local_max):
-	d = scene.shape[0]/image.shape[0]
+	# Calculo do d para a amostragem (C/N).
+	d = int(scene.shape[0]/image.shape[0])
 
-	# Quantização
-
-	# Normalizando valores entre 0 e 65535 (uint16 max)
+	# Normalizando valores entre 0 e 65535 (uint16 max).
 	scene = np.iinfo(np.uint16).max*((scene-scene.min())/(scene.max()-scene.min()))
 
-	# Convertendo para int16
-	# scene = scene.astype('uint16')
-	# scene = scene >> (16-B)
-
-	# Máximo local
+	# Amostragem - Máximo local
 	for (i,j), value in np.ndenumerate(image):
-		image[i,j] = np.uint16(f_max(scene, i, j, d)) >> (16-B)
+		image[i,j] = f_max(scene, i, j, d)
+
+	# Quantização
+	image = 255*((image)/(image.max()))
+
+	# Realizando shift para ficar somente com B bits.
+	image = np.uint8(image) >> (8-B)
 
 	return image
 
@@ -87,8 +88,9 @@ def gen_image(image, scene, B, f_max=local_max):
 def RMSE(g, R):
 	return math.sqrt(sum(sum( (g-R)**2 )))
 
+# Função principal do programa.
 def main():
-	# Recebendo parametros.
+	# Recebendo parametros (inputs).
 	# Nome do arquivo.
 	fname = str(input().rstrip())
 	# Tamanho da lateral da cena (C x C).
@@ -108,8 +110,10 @@ def main():
 	random.seed(S)
 
 	# Gerando a imagem da cena.
-	# Numpy array preenchidas com zeros de tamanho C x C.
+	# Numpy array para a cena preenchida com zeros de tamanho (C x C).
 	scene = np.zeros((C,C))
+	# Numpy array para a imagem preenchida com zeros de tamanho (N x N).
+	image = np.zeros((N, N))
 
 	# Definindo a possibilidade das funções para gerar a cena.
 	functions = {
@@ -119,17 +123,18 @@ def main():
         4: f_four,
         5: f_five,
 	}
+
 	# Gerando a cena de acordo com a função escolhida.
 	scene =  functions.get(f)(scene, Q)
+
 	# Gerando imagem digital a partir da cena.
-	image = np.zeros((N, N))
 	image = gen_image(image, scene, B)
 
 	# Comparação
 	R = np.load(fname) # Carregando arquivo para comparação.
-
-	error = RMSE(image, R)
+	error = RMSE(image, R) # Calculo do erro
 	print(error)
+
 
 if __name__ == "__main__":
     main()
