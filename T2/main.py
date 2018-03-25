@@ -17,10 +17,10 @@ def read_images(fname):
 		L.append( imageio.imread(fname + str(i+1) + ".png") )
 
 	# Retornando as imagens lidas no array.
-	return L #(L[0], L[1], L[2], L[3])
+	return L #(L1, L2, L3 e L4)
 
-# Função para o calculo do histograma acumulado.
-def ha(img):
+# Função para o calculo do histograma.
+def histogram(img):
 	# Calculando os ids, e a quantidade de vezes que cada valor se repete para o id.
 	(ids, qnt) = np.unique(img, return_counts=True)
 
@@ -31,10 +31,11 @@ def ha(img):
 	for i in range(ids.shape[0]):
 		h[int(ids[i])] = qnt[i]
 
-	# Calculo do histograma acumulado.
-	ha = np.cumsum(h)
+	return h
 
-	return ha
+# Função para o calculo do histograma acumulado.
+def ha(hist):
+	return np.cumsum(hist)
 
 # Função que faz a equalização por histograma dado uma imagem e histograma.
 def histogram_equalization(img, hist):
@@ -42,7 +43,7 @@ def histogram_equalization(img, hist):
 	N = img.shape[0]
 
 	for (i, j), v in np.ndenumerate(img):
-		img[i, j] = ((L - 1)/(N**2))*hist[img[i, j]]
+		img[i, j] = np.uint8(((L - 1)/(N**2))*hist[img[i, j]])
 
 	return img
 
@@ -50,8 +51,8 @@ def histogram_equalization(img, hist):
 def gamma_adjust(img, gamma):
 	return np.uint8(255.0*((img/255.0)**gamma))
 
-# Função que gera uma imagem H com super-resolução a partir de um
-# 	array de imagens L.
+# Função que gera uma imagem H com super-resolução de tamanho 2*N
+# a partir de um conjunto com 4 imagens L com tamanho N.
 def SR(L):
 	# Tamanho das imagens L.
 	N = L[0].shape[0]
@@ -84,20 +85,26 @@ def main():
 
 	# Lendo as imagens de baixa qualidade.
 	L = read_images(imglow)
+
 	# Método de realce 1.
 	# Função de transferencia individual.
 	if(opt == 1):
 		for i in range(len(L)):
-			hist = ha(L[i])
+			# Calculo do histograma acumulado de cada imagem.
+			hist = ha(histogram(L[i]))
+			# Realização da equalização.
 			L[i] = histogram_equalization(L[i], hist)
 
 	# Método de realce 2.
 	# Função de transferencia conjunta.
 	elif(opt == 2):
-		hist = 0
+		hist = np.zeros(256)
+		# Soma dos histogramas.
 		for Li in L:
-			hist += ha(Li)
-
+			hist += histogram(Li)
+		# Calculo do histograma acumulado para o histograma médio das imagens.
+		hist = ha(hist/len(L))
+		# Realização da equalização.
 		for i in range(len(L)):
 			L[i] = histogram_equalization(L[i], hist)
 
@@ -105,11 +112,11 @@ def main():
 	# Função de ajuste gamma.
 	elif(opt == 3):
 		for i in range(len(L)):
-			L[i] = gamma_adjust(L[i], gamma)
+			# Ajuste em (1/gamma).
+			L[i] = gamma_adjust(L[i], (1/gamma))
 
 	# Gerando imagem com super-resolução.
 	H = SR(L)
-
 	# Abrindo imagem de alta qualidade.
 	Hr = imageio.imread(imghigh + ".png")
 	# Comparando imagens, e imprimindo o valor com 4 casas decimais.
