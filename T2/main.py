@@ -8,7 +8,6 @@
 import numpy as np
 import imageio
 import math
-import matplotlib.pyplot as plt
 
 # Função para a leitura das 4 imagens de baixa qualidade.
 def read_images(fname):
@@ -62,9 +61,9 @@ def SR(L):
 	# Percorrendo quadrantes.
 	for (di, dj) in np.ndindex((2,2)):
 		# Percorrendo cada imagem.
-		for (i, j), v in np.ndenumerate(L[dj*2+di]):
+		for (i, j), v in np.ndenumerate(L[di*2+dj]):
 			# Atribuindo super-resolução.
-			H[2*i+dj, 2*j+di]= L[dj*2+di][i, j]
+			H[2*i+di, 2*j+dj]= L[di*2+dj][i, j]
 
 	return H
 
@@ -75,9 +74,9 @@ def RMSE(H, Hr):
 def main():
 	# Recebendo parametros (inputs).
 	## Nome do arquivo para imagem de baixa resolução.
-	imglow = str(input())
+	imglow = str(input().rstrip())
 	## Nome do arquivo para imagem de alta resolução.
-	imghigh = str(input())
+	imghigh = str(input().rstrip())
 	## Método de realce.
 	opt = int(input())
 	## Parâmetro do realce gamma.
