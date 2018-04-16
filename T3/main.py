@@ -245,7 +245,8 @@ def main():
 	# Caso seja necessário converter para inteiro:
 	# error = RMSE(np.uint8(I), np.uint8(I_hat))
 
-	print(error)
+	print("%.4f" % error)
+
 
 if __name__ == '__main__':
 	main()
