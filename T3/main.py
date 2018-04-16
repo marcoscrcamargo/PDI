@@ -54,6 +54,8 @@ def get_filter(filt, n):
 		v_G1D = np.vectorize(G1D)
 		# Aplicando a gaussiana no array.
 		f = v_G1D(f, sigma=sigma)
+		# Normalizando para que a soma seja 1.
+		f = f/sum(f)
 
 	return f
 
@@ -239,7 +241,10 @@ def main():
 	I_hat = domain.get(D)(I, weights)
 
 	# Imprimindo o erro.
-	error = RMSE(np.uint8(I), np.uint8(I_hat))
+	error = RMSE((I), I_hat)
+	# Caso seja necessário converter para inteiro:
+	# error = RMSE(np.uint8(I), np.uint8(I_hat))
+
 	print(error)
 
 if __name__ == '__main__':
