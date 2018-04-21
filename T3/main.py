@@ -82,12 +82,11 @@ def conv_point(f, mask, x):
 		float: valor resultante da correlação no ponto.
 	"""
 	n = mask.shape[0]
-	N = f.shape[0]
 	d = int((n-1)/2)
 	# Pegando submatriz de x-d até x+d, considerando um vetor circular.
 	idx = range(x-d, x+d+1)
 	sub_f = f.take(idx, mode="wrap")
-	return int( np.sum(np.multiply(sub_f, mask)) )
+	return np.sum(np.multiply(sub_f, mask))
 
 def image_convolution(f, mask):
 	"""Calcula a Convulução em um vetor 1D utilizando imagem wrap
