@@ -142,22 +142,14 @@ def convolution2D(f, w):
 	w_flip = np.flip(np.flip(w, 0), 1)
 	# Criando matriz de saída.
 	g = np.zeros((N, M))
-
+	f = np.pad(f, (a, b), mode='constant', constant_values=(0))
 	# Para cada pixel da imagem, realiza a convolução.
-	for i in range(1, N):
-		for j in range(1, M):
-			sub_f = np.zeros((n, m))
-
-			# Calculo dos recortes dos limites.
-			xi = a if (i-a) < 0 else 0
-			xf = a if (i+a) >= N else 0
-			yi = b if (j-b) < 0 else 0
-			yf = b if (j+b) >= N else 0
-
-			# Submatriz para multiplicação com recortes.
-			sub_f[0+xi:n-xf, 0+yi:m-yf] = f[i-a+xi:i+a+1-xf, j-b+yi:j+b+1-yf]
+	for i in range(1, N+1):
+		for j in range(1, M+1):
+			# Submatriz para multiplicação.
+			sub_f = f[i-a:i+a+1, j-b:j+b+1]
 			# Calculo da convolução no ponto.
-			g[i, j] = np.sum(np.multiply(sub_f, w_flip))
+			g[i-1, j-1] = np.sum(np.multiply(sub_f, w_flip))
 	return g
 
 def sobel_opr(I):
