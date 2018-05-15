@@ -3,7 +3,7 @@
 
 # Marcos Cesar Ribeiro de Camargo - 9278045
 # SCC251							 1/2018
-# Trabalho 5			  Image Restoration
+# Trabalho 6			  Image Restoration
 
 import numpy as np
 import imageio
@@ -20,13 +20,21 @@ def RMSE(H, Hr):
 	N, M = H.shape
 	return np.sqrt( np.sum( np.power((H-Hr), 2) )/ (N*M) )
 
-
 def local_noise_reduction(Inoisy, sigma_noisy, n):
+	"""Filter with local noise reduction
+	Args:
+	    Inoisy (np.array): The image with noise
+	    sigma_noisy (float): sigma for removing the noise
+	    n (int): size of filter
+
+	Returns:
+	    np.array: image with local noise reduction filter applied.
+	"""
 	h, w = Inoisy.shape
 	d = int((n-1)/2)
-	Iout = np.zeros((h, w))
-	sigma_noisy_2 = np.power(sigma_noisy, 2)
 
+	Iout = np.zeros((h, w))
+	# Creating matrix to armazenate the filters.
 	N = np.zeros((h, w, n, n))
 
 	for (i, j), pixel in np.ndenumerate(Inoisy):
@@ -34,11 +42,23 @@ def local_noise_reduction(Inoisy, sigma_noisy, n):
 		N[i, j] = Inoisy.take(range(i-d, i+d+1), mode='wrap', axis=0).take(range(j-d, j+d+1), mode='wrap', axis=1)
 
 	# Calculationg output image.
-	Iout = Inoisy - ((sigma_noisy_2/np.var(N, axis=(2,3))) * (Inoisy - np.mean(N, axis=(2,3))))
+	Iout = Inoisy - ((np.power(sigma_noisy, 2)/np.var(N, axis=(2,3))) * (Inoisy - np.mean(N, axis=(2,3))))
 
 	return Iout
 
 def stage_A(Inoisy, n_cur, M, i, j):
+	"""Auxiliar recursive function 'Stage A' for median adaptative filter.
+
+	Args:
+	    Inoisy (np.array): Image with noise
+	    n_cur (int): current size of filter
+	    M (int): max size of filter
+	    i (int): index i of image
+	    j (int): index j of image
+
+	Returns:
+	    int: value of pixel(i, j)
+	"""
 	# Getting filter using clip.
 	d = int((n_cur-1)/2)
 	N = Inoisy.take(range(i-d, i+d+1), mode='clip', axis=0).take(
@@ -48,6 +68,7 @@ def stage_A(Inoisy, n_cur, M, i, j):
 	zmed = np.median(N)
 	zmax = N.max()
 
+	# Stage A
 	A1 = (zmed - zmin)
 	A2 = (zmed - zmax)
 	if(A1 > 0 and A2 < 0):
@@ -66,6 +87,15 @@ def stage_A(Inoisy, n_cur, M, i, j):
 			return zmed
 
 def median_adaptative(Inoisy, M, n):
+	"""Applies the median adaptative filter in the image Inoisy
+	Args:
+	    Inoisy (np.array): Image with noise
+	    M (int): max size of filter
+	    n (int): min size of filter
+
+	Returns:
+	    np.array: image with filter applied.
+	"""
 	h, w = Inoisy.shape
 	Iout = np.zeros((h, w))
 
@@ -76,8 +106,17 @@ def median_adaptative(Inoisy, M, n):
 
 	return Iout
 
-
 def counter_harmonic_mean(Inoisy, Q, n):
+	"""Applies the counter harmonic mean filter in the noisy image.
+
+	Args:
+	    Inoisy (np.array): Image with noise.
+	    Q (float): order of filter.
+	    n (int): size of filter.
+
+	Returns:
+	    np.array: image with filter applied.
+	"""
 	h, w = Inoisy.shape
 	# Calculating bounds
 	d = int((n-1)/2)
@@ -95,8 +134,6 @@ def counter_harmonic_mean(Inoisy, Q, n):
 			Iout[i, j] = np.sum(np.power(N[N != 0], Q+1))/np.sum(np.power(N[N != 0], Q))
 
 	return Iout
-
-
 
 def main():
 	## Reading inputs.
