@@ -33,13 +33,15 @@ def local_noise_reduction(Inoisy, sigma_noisy, n):
 	h, w = Inoisy.shape
 	d = int((n-1)/2)
 
-	Iout = np.zeros((h, w))
 	# Creating matrix to armazenate the filters.
 	N = np.zeros((h, w, n, n))
 
+	# Padding matrix using wrap.
+	Inoisy_pad = np.pad(Inoisy, d, mode='wrap')
+
 	for (i, j), pixel in np.ndenumerate(Inoisy):
-		# Getting filter using wrap.
-		N[i, j] = Inoisy.take(range(i-d, i+d+1), mode='wrap', axis=0).take(range(j-d, j+d+1), mode='wrap', axis=1)
+		# Getting filter using the padded matrix.
+		N[i, j] = Inoisy_pad[i:i+2*d+1, j:j+2*d+1]
 
 	# Calculationg output image.
 	Iout = Inoisy - ((np.power(sigma_noisy, 2)/np.var(N, axis=(2,3))) * (Inoisy - np.mean(N, axis=(2,3))))
