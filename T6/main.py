@@ -27,17 +27,14 @@ def local_noise_reduction(Inoisy, sigma_noisy, n):
 	Iout = np.zeros((h, w))
 	sigma_noisy_2 = np.power(sigma_noisy, 2)
 
-	for i in range(h):
-		for j in range(w):
-			# Getting filter using wrap.
-			N = Inoisy.take(range(i-d, i+d+1), mode='wrap', axis=0).take(
-							range(j-d, j+d+1), mode='wrap', axis=1)
-			# Calculating mean.
-			mN = np.mean(N)
-			# Calculation variance.
-			sigmaN = np.var(N)
-			# Calculationg output image.
-			Iout[i, j] = Inoisy[i, j] - ((sigma_noisy_2/sigmaN) * (Inoisy[i, j] - mN))
+	N = np.zeros((h, w, n, n))
+
+	for (i, j), pixel in np.ndenumerate(Inoisy):
+		# Getting filter using wrap.
+		N[i, j] = Inoisy.take(range(i-d, i+d+1), mode='wrap', axis=0).take(range(j-d, j+d+1), mode='wrap', axis=1)
+
+	# Calculationg output image.
+	Iout = Inoisy - ((sigma_noisy_2/np.var(N, axis=(2,3))) * (Inoisy - np.mean(N, axis=(2,3))))
 
 	return Iout
 
