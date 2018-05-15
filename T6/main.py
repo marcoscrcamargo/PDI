@@ -94,7 +94,8 @@ def counter_harmonic_mean(Inoisy, Q, n):
 			# Getting filter using zero padding.
 			N = Inoisy_pad[i:i+2*d+1, j:j+2*d+1]
 			# Calculationg output image.
-			Iout[i, j] = np.sum(np.power(N, Q+1))/np.sum(np.power(N, Q))
+			# Using N[N != 0] because 0^(-1, 0) = inf
+			Iout[i, j] = np.sum(np.power(N[N != 0], Q+1))/np.sum(np.power(N[N != 0], Q))
 
 	return Iout
 
